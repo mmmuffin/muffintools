@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ID 替换工具</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            padding: 10px;
+        }
+        .container {
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            display: flex;
+            justify-content: space-between;
+            width: 90%;
+            max-width: 1200px;
+        }
+        .section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 45%;
+        }
+        .section h2 {
+            margin-bottom: 10px;
+            font-size: 1.2em;
+            color: #555;
+        }
+        textarea {
+            width: 100%;
+            height: 60vh;
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            resize: none;
+            font-size: 1em;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #copyButton {
+            margin-top: 10px;
+        }
+        #toast {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 5px;
+            padding: 16px;
+            position: fixed;
+            z-index: 1;
+            left: 50%;
+            bottom: 30px;
+            transform: translateX(-50%);
+        }
+        #toast.show {
+            visibility: visible;
+            animation: fadein 0.5s, fadeout 0.5s 2.5s;
+        }
+        @keyframes fadein {
+            from {bottom: 0; opacity: 0;}
+            to {bottom: 30px; opacity: 1;}
+        }
+        @keyframes fadeout {
+            from {bottom: 30px; opacity: 1;}
+            to {bottom: 0; opacity: 0;}
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="section">
+            <h2>输入新ID（每行一个，共72个）</h2>
+            <textarea id="newIds" placeholder="请输入新的ID，每行一个"></textarea>
+            <button onclick="replaceIds()">替换 ID</button>
+        </div>
+        <div class="section">
+            <h2>替换后的代码</h2>
+            <textarea id="outputCode" readonly></textarea>
+            <button id="copyButton" onclick="copyToClipboard()">复制代码</button>
+        </div>
+    </div>
+
+    <div id="toast">复制成功!</div>
+
+    <script>
+        const jsTemplate = `{
+  "A": [
+    "145069692995772416",
+    "145070935866871808",
+    "145070572992466944",
+    "145090163021975552",
+    "145065878618378240",
+    "145019271958548480",
+    "145272099434663936",
+    "145065677209739264",
+    "145073364035182592",
+    "145076381906165760",
+    "145072338951479296",
+    "145006525532610560",
+    "145037962255540224",
+    "145070294794510336",
+    "145073906625286144",
+    "145078064444874752",
+    "145079064599990272",
+    "145077472492314624"
+  ],
+  "B": [
+    "145067712569413632",
+    "145070046844035072",
+    "145069873399336960",
+    "145088579850215424",
+    "145069556571840512",
+    "145032142753112064",
+    "145272099434663936",
+    "145066753885528064",
+    "145041257734922240",
+    "145081563844976640",
+    "145071384915091456",
+    "145020832900456448",
+    "145074802209853440",
+    "145070584774057984",
+    "145074685819756544",
+    "145078342118543360",
+    "145080235827666944",
+    "145074033689370624"
+  ],
+  "C": [
+    "145071392980738048",
+    "145071364965142528",
+    "145088369780645888",
+    "145086309840510976",
+    "145070559721480192",
+    "145023359115862016",
+    "145272099434663936",
+    "145067385719885824",
+    "145036572601094144",
+    "145069348289044480",
+    "145073194027458560",
+    "145042317738254336",
+    "145075406002724864",
+    "145070763172438016",
+    "145085980291899392",
+    "145076541600305152",
+    "145081506066599936",
+    "145069987326861312"
+  ],
+  "D": [
+    "145074263694565376",
+    "145069673121112064",
+    "145086807307984896",
+    "145094888966590464",
+    "145071639547092992",
+    "145033801686110208",
+    "145272099434663936",
+    "145299542459342848",
+    "145073015042084864",
+    "145043778121555968",
+    "145072838692573184",
+    "144992226953142272",
+    "145034893486776320",
+    "145071017607307264",
+    "145082409817268224",
+    "145077300421201920",
+    "145082752156569600",
+    "145068472375971840"
+  ]
+}`;
+
+        function replaceIds() {
+            const newIds = document.getElementById('newIds').value.trim().split('\n');
+            if (newIds.length !== 72) {
+                alert("请输入72个新的ID，每行一个。");
+                return;
+            }
+
+            let modifiedCode = jsTemplate;
+            let idIndex = 0;
+
+            modifiedCode = modifiedCode.replace(/"(\d{18})"/g, () => {
+                return `"${newIds[idIndex++].trim()}"`;
+            });
+
+            document.getElementById('outputCode').value = modifiedCode;
+        }
+
+        function copyToClipboard() {
+            const outputCode = document.getElementById('outputCode');
+            outputCode.select();
+            outputCode.setSelectionRange(0, 99999); // For mobile devices
+            document.execCommand('copy');
+
+            // 显示浮窗提示
+            const toast = document.getElementById('toast');
+            toast.className = 'show';
+            setTimeout(() => { toast.className = toast.className.replace('show', ''); }, 3000);
+        }
+    </script>
+</body>
+</html>
