@@ -406,6 +406,11 @@
                         </div>
 
                         <div class="form-group">
+                            <label for="channelId">频道ID (channelId)</label>
+                            <input type="number" id="channelId" value="600002">
+                        </div>
+
+                        <div class="form-group">
                             <label>是否展示点赞 (defaultShowLiked)</label>
                             <div class="toggle-group">
                                 <button class="toggle-btn" data-value="true" onclick="toggleButton(this, 'defaultShowLiked')">是</button>
@@ -467,7 +472,8 @@
             noInterstitialShow: '1',
             noLogin: '1',
             defaultShowComment: 'false',
-            defaultShowLiked: 'false'
+            defaultShowLiked: 'false',
+            channelId: '600002'
         };
 
         // 选择deeplinkPath单选按钮
@@ -482,6 +488,11 @@
         // fromOuter输入框同步selectedValues
         document.getElementById('fromOuter').addEventListener('input', function(e) {
             selectedValues.fromOuter = e.target.value;
+        });
+
+        // channelId输入框同步selectedValues
+        document.getElementById('channelId').addEventListener('input', function(e) {
+            selectedValues.channelId = e.target.value;
         });
 
         // 切换按钮状态
@@ -516,6 +527,7 @@
 
             const cmtId = document.getElementById('cmtId') ? document.getElementById('cmtId').value : 0;
             const replyId = document.getElementById('replyId') ? document.getElementById('replyId').value : 0;
+            const channelId = document.getElementById('channelId') ? document.getElementById('channelId').value : 600002;
             const fromOuter = document.getElementById('fromOuter').value.trim();
             const from = fromOuter;
             const deeplinkPath = selectedValues.deeplinkPath;
@@ -533,7 +545,8 @@
                 defaultShowComment: selectedValues.defaultShowComment === 'true',
                 cmtId: Number(cmtId),
                 defaultShowLiked: selectedValues.defaultShowLiked === 'true',
-                replyId: Number(replyId)
+                replyId: Number(replyId),
+                channelId: Number(channelId)
             };
 
             // 转换为JSON字符串并进行Base64编码，使用自定义的JSON序列化来移除空格
