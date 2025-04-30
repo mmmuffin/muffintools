@@ -2,9 +2,8 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>深度链接生成器</title>
+    <title>内容DeepLink生成器</title>
     <style>
-        /* 重置和基础样式 */
         * {
             margin: 0;
             padding: 0;
@@ -14,13 +13,13 @@
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             min-height: 100vh;
-            background: linear-gradient(45deg, #0a0a0a, #1a1a1a);
-            color: #fff;
+            background: linear-gradient(120deg, #f6f8ff, #e9f1ff);
+            color: #2c3e50;
             position: relative;
             overflow-x: hidden;
+            padding: 20px;
         }
 
-        /* 动态背景 */
         body::before {
             content: '';
             position: fixed;
@@ -29,8 +28,8 @@
             width: 100%;
             height: 100%;
             background: 
-                radial-gradient(circle at 20% 30%, rgba(41, 196, 255, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 80% 70%, rgba(255, 41, 111, 0.15) 0%, transparent 50%);
+                radial-gradient(circle at 20% 30%, rgba(41, 196, 255, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(255, 41, 111, 0.05) 0%, transparent 50%);
             animation: backgroundPulse 10s ease-in-out infinite alternate;
             z-index: -1;
         }
@@ -41,547 +40,465 @@
         }
 
         .container {
-            max-width: 1200px;
-            margin: 40px auto;
+            max-width: 1400px;
+            margin: 0 auto;
             padding: 20px;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
+            display: flex;
             gap: 30px;
         }
 
+        .left-panel {
+            flex: 0 0 600px;
+        }
+
+        .right-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
         .section {
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.9);
             backdrop-filter: blur(10px);
             border-radius: 20px;
-            padding: 40px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
-            transition: transform 0.3s, box-shadow 0.3s;
-            position: relative;
-            overflow: hidden;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            height: fit-content;
         }
 
-        .section::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, 
-                transparent, 
-                rgba(255, 255, 255, 0.3), 
-                transparent);
-            animation: borderGlow 2s linear infinite;
+        h1, h2 {
+            color: #1a73e8;
+            margin-bottom: 20px;
         }
 
-        @keyframes borderGlow {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
-        }
-
-        h2 {
-            color: #fff;
-            font-size: 1.8em;
+        h1 {
+            text-align: center;
             margin-bottom: 30px;
-            text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
-            position: relative;
-            display: inline-block;
         }
 
-        h2::after {
-            content: '';
-            position: absolute;
-            bottom: -10px;
-            left: 0;
-            width: 100%;
-            height: 2px;
-            background: linear-gradient(90deg, #00ff88, #00a3ff);
+        .form-group {
+            margin-bottom: 20px;
         }
 
         label {
             display: block;
-            margin-bottom: 10px;
-            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 8px;
+            color: #5f6368;
             font-weight: 500;
         }
 
-        /* 表单元素容器 */
-        .form-group {
-            margin-bottom: 25px;
-            position: relative;
-        }
-
-        /* 输入框和选择框样式调整 */
-        input, select {
+        input[type="text"],
+        input[type="number"],
+        select {
             width: 100%;
             padding: 12px 15px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid #e0e0e0;
             border-radius: 8px;
-            color: #fff;
             font-size: 14px;
+            color: #2c3e50;
+            background: #fff;
             transition: all 0.3s;
-            backdrop-filter: blur(5px);
-            margin-bottom: 0;
         }
 
-        input:focus, select:focus {
+        input:focus,
+        select:focus {
             outline: none;
-            border-color: #00ff88;
-            box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
+            border-color: #1a73e8;
+            box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.1);
         }
 
-        button {
-            background: linear-gradient(45deg, #00ff88, #00a3ff);
+        .toggle-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .toggle-btn {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background: #fff;
+            color: #5f6368;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .toggle-btn.active {
+            background: #1a73e8;
+            color: #fff;
+            border-color: #1a73e8;
+        }
+
+        .generate-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(45deg, #1a73e8, #34a853);
             color: #fff;
             border: none;
-            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 20px;
+        }
+
+        .generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(26, 115, 232, 0.2);
+        }
+
+        .result-box {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            margin-bottom: 15px;
+            word-break: break-all;
+        }
+
+        .copy-btn {
+            background: #1a73e8;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
             border-radius: 8px;
             cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        button::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, 
-                transparent, 
-                rgba(255, 255, 255, 0.2), 
-                transparent);
-            transition: 0.5s;
-        }
-
-        button:hover::before {
-            left: 100%;
-        }
-
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 255, 136, 0.4);
-        }
-
-        /* 结果容器样式优化 */
-        .result-container {
-            margin-top: 30px;
-            position: relative;
-            background: rgba(0, 0, 0, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            padding: 20px;
-        }
-
-        #result {
-            background: transparent;
-            border: none;
-            padding: 0;
-            padding-right: 100px;
-            position: relative;
-            min-height: 40px;
-        }
-
-        #deeplinkText {
-            word-break: break-all;
-            color: #00ff88;
-            font-family: monospace;
-            font-size: 14px;
-            line-height: 1.5;
-        }
-
-        #copyBtn {
-            position: absolute;
-            right: -10px;
-            top: 50%;
-            transform: translateY(-50%);
-            padding: 8px 15px;
-            font-size: 12px;
-            background: linear-gradient(45deg, #00a3ff, #00ff88);
-            z-index: 1;
-        }
-
-        /* 历史记录样式优化 */
-        #history {
-            margin-top: 30px;
-            height: 400px; /* 固定高度以对齐 */
-            overflow-y: auto;
-            padding-right: 10px;
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 10px;
-            padding: 15px;
-        }
-
-        #historyList {
-            list-style: none;
-            padding: 0;
-        }
-
-        #historyList li {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 15px;
-            margin-bottom: 15px;
-            border-radius: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            font-size: 13px;
             transition: all 0.3s;
         }
 
-        .history-item {
-            margin-bottom: 8px;
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 12px;
+        .copy-btn:hover {
+            background: #1557b0;
         }
 
-        .history-params {
-            color: #00ff88;
-            margin-right: 10px;
-        }
-
-        .history-link {
-            color: #fff;
-            word-break: break-all;
-            font-family: monospace;
-        }
-
-        #historyList li:hover {
-            transform: translateX(5px);
-            border-color: #00ff88;
-        }
-
-        /* 自定义滚动条 */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: linear-gradient(45deg, #00ff88, #00a3ff);
-            border-radius: 4px;
-        }
-
-        /* 通知样式 */
-        #notification {
+        .notification {
             position: fixed;
             top: 20px;
             right: 20px;
             padding: 15px 25px;
             border-radius: 8px;
-            background: rgba(0, 255, 136, 0.2);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(0, 255, 136, 0.3);
             color: #fff;
+            font-weight: 500;
             display: none;
-            animation: slideIn 0.3s ease-out;
             z-index: 1000;
+            animation: slideIn 0.3s ease-out;
         }
 
         @keyframes slideIn {
             from {
-                transform: translateX(100%) translateY(-50%);
+                transform: translateX(100%);
                 opacity: 0;
             }
             to {
-                transform: translateX(0) translateY(0);
+                transform: translateX(0);
                 opacity: 1;
             }
         }
 
-        /* 操作按钮容器 */
-        .actions {
-            margin-top: 30px;
-            display: flex;
-            gap: 15px;
-            justify-content: flex-start;
+        .success {
+            background: #48bb78;
         }
 
-        /* 复选框容器样式 */
-        .checkbox-container {
+        .error {
+            background: #e53e3e;
+        }
+
+        .history-item {
+            background: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #e0e0e0;
+            transition: all 0.3s;
+        }
+
+        .history-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .history-meta {
             display: flex;
-            align-items: center;
-            margin: 20px 0;
             gap: 10px;
-        }
-
-        .checkbox-container input[type="checkbox"] {
-            width: auto;
-            margin: 0;
-        }
-
-        .checkbox-container label {
-            margin: 0;
-            display: inline;
-        }
-
-        /* 游戏选择器样式优化 */
-        .game-select {
-            position: relative;
-            margin-bottom: 25px;
-        }
-
-        .game-select select {
-            width: 100%;
-            padding-right: 30px;
-            appearance: none;
-        }
-
-        .game-select::after {
-            display: none;
-        }
-
-        /* 自定义游戏ID输入框容器 */
-        #customGameId {
-            margin-bottom: 25px;
-        }
-
-        /* 响应式布局优化 */
-        @media (max-width: 768px) {
-            .container {
-                grid-template-columns: 1fr;
-                padding: 15px;
-            }
-            
-            .section {
-                padding: 25px;
-            }
-            
-            .actions {
-                flex-direction: column;
-            }
-            
-            button {
-                width: 100%;
-            }
-        }
-
-        /* 添加新样式 */
-        .save-game-container {
-            margin-top: 10px;
-        }
-
-        #gameNameInput {
             margin-bottom: 10px;
         }
 
-        /* 添加清除按钮样式 */
-        #history button {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: #fff;
-            border-radius: 4px;
-            transition: all 0.3s;
-        }
-
-        #history button:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: translateY(-1px);
-        }
-
-        /* 添加弹窗样式 */
-        #manageModal button {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: #fff;
-            border-radius: 4px;
-            transition: all 0.3s;
-        }
-
-        #manageModal button:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-
-        #customGamesList button:hover {
-            background: rgba(255, 0, 0, 0.2);
-            border-color: rgba(255, 0, 0, 0.3);
-        }
-
-        /* 添加来源标识历史标签样式 */
-        .source-tags {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-
-        .source-tag {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: #fff;
+        .history-tag {
+            background: #f1f3f4;
             padding: 4px 8px;
             border-radius: 4px;
             font-size: 12px;
+            color: #5f6368;
+        }
+
+        .history-link {
+            word-break: break-all;
+            color: #1a73e8;
+            cursor: pointer;
+        }
+
+        .history-link:hover {
+            text-decoration: underline;
+        }
+
+        .clear-btn {
+            background: #f1f3f4;
+            color: #5f6368;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 8px;
             cursor: pointer;
             transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .clear-btn:hover {
+            background: #e4e6e7;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .decode-result {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .advanced-options {
+            margin-top: 20px;
+            border-top: 1px solid #e0e0e0;
+            padding-top: 20px;
+        }
+
+        .advanced-toggle {
+            width: 100%;
+            padding: 10px;
+            background: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            color: #5f6368;
+            cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 6px;
-        }
-
-        .source-tag:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: translateY(-1px);
-        }
-
-        .source-tag .delete-btn {
-            color: rgba(255, 255, 255, 0.5);
+            justify-content: space-between;
             font-size: 14px;
-            padding: 0 2px;
+            transition: all 0.3s;
         }
 
-        .source-tag .delete-btn:hover {
-            color: rgba(255, 0, 0, 0.8);
+        .advanced-toggle:hover {
+            background: #f1f3f4;
         }
 
-        /* 修改选择框的通用样式 */
-        select {
-            appearance: none !important;
-            -webkit-appearance: none !important;
-            -moz-appearance: none !important;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='rgba(255,255,255,0.8)' d='M6 8.825L1.175 4 2.238 2.938 6 6.7 9.763 2.937 10.825 4z'/%3E%3C/svg%3E") !important;
-            background-repeat: no-repeat !important;
-            background-position: right 15px center !important;
-            padding-right: 40px !important;
+        .advanced-toggle::after {
+            content: '▼';
+            font-size: 12px;
+            transition: transform 0.3s;
+        }
+
+        .advanced-toggle.active::after {
+            transform: rotate(180deg);
+        }
+
+        .advanced-content {
+            display: none;
+            padding: 20px;
+            background: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        .advanced-content.show {
+            display: block;
         }
     </style>
 </head>
 <body>
-    <div id="notification"></div>
     <div class="container">
-        <div class="section">
-            <h2>生成深度链接</h2>
-            
-            <div class="form-group">
-                <div class="game-select">
-                    <label for="gameId">选择游戏</label>
-                    <select id="gameId">
-                        <option value="custom">自定义输入</option>
-                        <option value="">------------</option>
-                    </select>
+        <!-- 左侧面板 - 操作区 -->
+        <div class="left-panel">
+            <div class="section">
+                <h1>内容DeepLink生成器</h1>
+                
+                <div class="form-group">
+                    <label for="cid">内容ID (cid)</label>
+                    <input type="text" id="cid" placeholder="请输入内容ID">
                 </div>
-            </div>
-            
-            <div class="form-group" id="customGameId">
-                <label for="customGameIdInput">自定义游戏ID</label>
-                <input type="text" id="customGameIdInput" placeholder="请输入游戏ID">
-                <div class="save-game-container">
-                    <input type="text" id="gameNameInput" placeholder="游戏名称（选填）" style="margin-top: 10px;">
-                    <div style="display: flex; gap: 10px; margin-top: 10px;">
-                        <button onclick="saveCustomGame()" style="font-size: 12px; padding: 8px 15px;">保存为选项</button>
-                        <button onclick="manageCustomGames()" style="font-size: 12px; padding: 8px 15px;">管理选项</button>
+
+                <div class="form-group">
+                    <label>链接路径 (deeplinkPath)</label>
+                    <div class="toggle-group">
+                        <button class="toggle-btn active" data-value="floatPop" id="deeplinkPathFloatPop" onclick="selectDeeplinkPath(this)">floatPop</button>
+                        <button class="toggle-btn" data-value="push" id="deeplinkPathPush" onclick="selectDeeplinkPath(this)">push</button>
                     </div>
                 </div>
-            </div>
-            
-            <div class="form-group">
-                <label for="source">来源标识</label>
-                <input type="text" id="source" placeholder="请输入来源标识">
-                <div id="sourceHistory" class="source-tags" style="margin-top: 10px;"></div>
-            </div>
-            
-            <div class="form-group">
-                <label for="scenario">场景路径</label>
-                <select id="scenario">
-                    <option value="push">Push</option>
-                    <option value="contop">首页金刚位</option>
-                    <option value="app_tools_detail">更多工具</option>
-                </select>
-            </div>
-            
-            <div class="form-group">
-                <label for="pageCode">页面代号</label>
-                <select id="pageCode">
-                    <option value="open_migu_game">咪咕游戏</option>
-                </select>
-            </div>
-            
-            <div class="checkbox-container">
-                <input type="checkbox" id="noAds" checked>
-                <label for="noAds">生成无广告链接</label>
-            </div>
-            
-            <div class="actions">
-                <button onclick="generateDeeplink()">生成深度链接</button>
-            </div>
-            
-            <div class="result-container">
-                <div id="result">
-                    <span id="deeplinkText"></span>
-                    <button id="copyBtn" onclick="copyToClipboard()">复制</button>
+
+                <div class="form-group">
+                    <label for="fromOuter">fromOuter / from</label>
+                    <input type="text" id="fromOuter" value="publicpush" placeholder="请输入fromOuter/from">
                 </div>
+
+                <div class="form-group">
+                    <label>是否有闪屏 (noSplash)</label>
+                    <div class="toggle-group">
+                        <button class="toggle-btn active" data-value="1" onclick="toggleButton(this, 'noSplash')">无闪屏</button>
+                        <button class="toggle-btn" data-value="0" onclick="toggleButton(this, 'noSplash')">有闪屏</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>跳过闪屏 (skipSplash)</label>
+                    <div class="toggle-group">
+                        <button class="toggle-btn active" data-value="1" onclick="toggleButton(this, 'skipSplash')">跳过</button>
+                        <button class="toggle-btn" data-value="0" onclick="toggleButton(this, 'skipSplash')">不跳过</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>屏蔽插屏 (noInterstitial)</label>
+                    <div class="toggle-group">
+                        <button class="toggle-btn" data-value="1" onclick="toggleButton(this, 'noInterstitial')">屏蔽</button>
+                        <button class="toggle-btn active" data-value="0" onclick="toggleButton(this, 'noInterstitial')">不屏蔽</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>插屏展示拦截 (noInterstitialShow)</label>
+                    <div class="toggle-group">
+                        <button class="toggle-btn active" data-value="1" onclick="toggleButton(this, 'noInterstitialShow')">拦截</button>
+                        <button class="toggle-btn" data-value="0" onclick="toggleButton(this, 'noInterstitialShow')">不拦截</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>是否跳过登录 (noLogin)</label>
+                    <div class="toggle-group">
+                        <button class="toggle-btn active" data-value="1" onclick="toggleButton(this, 'noLogin')">是</button>
+                        <button class="toggle-btn" data-value="0" onclick="toggleButton(this, 'noLogin')">否</button>
+                    </div>
+                </div>
+
+                <div class="advanced-options">
+                    <button class="advanced-toggle" onclick="toggleAdvancedOptions(this)">高级选项（评论和点赞设置）</button>
+                    <div class="advanced-content">
+                        <div class="form-group">
+                            <label>是否展示评论 (defaultShowComment)</label>
+                            <div class="toggle-group">
+                                <button class="toggle-btn" data-value="true" onclick="toggleButton(this, 'defaultShowComment')">是</button>
+                                <button class="toggle-btn active" data-value="false" onclick="toggleButton(this, 'defaultShowComment')">否</button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="cmtId">默认打开的评论ID (cmtId)</label>
+                            <input type="number" id="cmtId" value="0">
+                        </div>
+
+                        <div class="form-group">
+                            <label>是否展示点赞 (defaultShowLiked)</label>
+                            <div class="toggle-group">
+                                <button class="toggle-btn" data-value="true" onclick="toggleButton(this, 'defaultShowLiked')">是</button>
+                                <button class="toggle-btn active" data-value="false" onclick="toggleButton(this, 'defaultShowLiked')">否</button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="replyId">默认打开的回复ID (replyId)</label>
+                            <input type="number" id="replyId" value="0">
+                        </div>
+                    </div>
+                </div>
+
+                <button class="generate-btn" onclick="generateDeeplink()">生成深度链接</button>
             </div>
         </div>
 
-        <div class="section">
-            <h2>深度链接解析</h2>
-            <div class="form-group">
-                <label for="deeplinkInput">输入深度链接</label>
-                <input type="text" id="deeplinkInput" placeholder="请粘贴需要解析的深度链接">
-            </div>
-            
-            <div class="actions">
-                <button onclick="decodeDeeplink()">解析</button>
-            </div>
-            
-            <div class="result-container" id="decodeResult" style="display: none;">
-                <pre id="decodedData"></pre>
+        <!-- 右侧面板 - 结果展示区 -->
+        <div class="right-panel">
+            <!-- 生成结果区域 -->
+            <div class="section" id="resultSection" style="display: none;">
+                <h2>生成结果</h2>
+                <div class="result-box" id="deeplinkResult"></div>
+                <button class="copy-btn" onclick="copyToClipboard()">复制链接</button>
             </div>
 
-            <div id="history">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                    <strong>生成记录：</strong>
-                    <button onclick="clearHistory()" style="padding: 5px 10px; font-size: 12px;">清除记录</button>
+            <!-- 链接解析区域 -->
+            <div class="section">
+                <h2>深度链接解析</h2>
+                <div class="form-group">
+                    <input type="text" id="decodeInput" placeholder="请输入需要解析的深度链接">
                 </div>
-                <ul id="historyList"></ul>
+                <button class="generate-btn" onclick="decodeDeeplink()">解析链接</button>
+                <pre class="decode-result" id="decodeResult"></pre>
+            </div>
+
+            <!-- 历史记录区域 -->
+            <div class="section">
+                <div class="section-header">
+                    <h2>生成历史</h2>
+                    <button class="clear-btn" onclick="clearHistory()">清除历史</button>
+                </div>
+                <div id="historyList"></div>
             </div>
         </div>
     </div>
 
-    <!-- 添加管理弹窗 -->
-    <div id="manageModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 1000;">
-        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1a1a1a; padding: 20px; border-radius: 10px; width: 90%; max-width: 500px; max-height: 80vh; overflow-y: auto;">
-            <h3 style="margin-bottom: 20px; color: #fff;">管理自定义选项</h3>
-            <div id="customGamesList" style="margin-bottom: 20px;"></div>
-            <div style="text-align: right;">
-                <button onclick="closeManageModal()" style="font-size: 12px; padding: 8px 15px;">关闭</button>
-            </div>
-        </div>
-    </div>
+    <div class="notification" id="notification"></div>
 
     <script>
-        // 修改游戏列表为空对象
-        let gameList = {};
+        // 存储当前选中的值
+        const selectedValues = {
+            deeplinkPath: 'floatPop',
+            fromOuter: 'floatPop',
+            noSplash: '1',
+            skipSplash: '1',
+            noInterstitial: '0',
+            noInterstitialShow: '1',
+            noLogin: '1',
+            defaultShowComment: 'false',
+            defaultShowLiked: 'false'
+        };
 
-        // 修改默认游戏判断函数
-        function isDefaultGame(id) {
-            return false; // 由于没有默认游戏，所以始终返回false
+        // 选择deeplinkPath单选按钮
+        function selectDeeplinkPath(button) {
+            document.querySelectorAll('#deeplinkPathFloatPop, #deeplinkPathPush').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            button.classList.add('active');
+            selectedValues.deeplinkPath = button.dataset.value;
         }
 
-        // 添加初始化历史记录的函数
-        function loadHistory() {
-            const historyList = document.getElementById('historyList');
-            const savedHistory = localStorage.getItem('deeplinkHistory');
-            if (savedHistory) {
-                historyList.innerHTML = savedHistory;
-            }
+        // fromOuter输入框同步selectedValues
+        document.getElementById('fromOuter').addEventListener('input', function(e) {
+            selectedValues.fromOuter = e.target.value;
+        });
+
+        // 切换按钮状态
+        function toggleButton(button, key) {
+            const parent = button.parentElement;
+            parent.querySelectorAll('.toggle-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            button.classList.add('active');
+            selectedValues[key] = button.dataset.value;
         }
 
-        // 页面加载时恢复历史记录
-        document.addEventListener('DOMContentLoaded', loadHistory);
-
+        // 显示通知
         function showNotification(message, type = 'success') {
             const notification = document.getElementById('notification');
             notification.textContent = message;
-            notification.style.backgroundColor = type === 'success' ? '#48bb78' : '#e53e3e';
+            notification.className = `notification ${type}`;
             notification.style.display = 'block';
             
             setTimeout(() => {
@@ -589,354 +506,190 @@
             }, 3000);
         }
 
-        // 添加保存自定义游戏的函数
-        function saveCustomGame() {
-            const gameId = document.getElementById('customGameIdInput').value;
-            const gameName = document.getElementById('gameNameInput').value.trim() || gameId;
-            
-            if (!gameId) {
-                showNotification('请输入游戏ID', 'error');
-                return;
-            }
-            
-            // 更新游戏列表
-            gameList[gameId] = gameName;
-            
-            // 更新选择框选项
-            const gameSelect = document.getElementById('gameId');
-            const option = document.createElement('option');
-            option.value = gameId;
-            option.textContent = gameName;
-            
-            // 将新选项插入到分隔线之后
-            const separatorIndex = 1; // 分隔线的索引
-            gameSelect.insertBefore(option, gameSelect.children[separatorIndex + 1]);
-            
-            // 保存到localStorage
-            localStorage.setItem('customGameList', JSON.stringify(gameList));
-            
-            // 清空输入框
-            document.getElementById('gameNameInput').value = '';
-            
-            showNotification('游戏已保存到选项列表');
-        }
-
-        // 添加管理自定义选项的函数
-        function manageCustomGames() {
-            const modal = document.getElementById('manageModal');
-            const customGamesList = document.getElementById('customGamesList');
-            customGamesList.innerHTML = '';
-
-            // 获取所有自定义游戏
-            for (const [id, name] of Object.entries(gameList)) {
-                // 跳过默认游戏（这里可以根据需要修改判断条件）
-                if (isDefaultGame(id)) continue;
-
-                const gameItem = document.createElement('div');
-                gameItem.style.display = 'flex';
-                gameItem.style.justifyContent = 'space-between';
-                gameItem.style.alignItems = 'center';
-                gameItem.style.padding = '10px';
-                gameItem.style.marginBottom = '10px';
-                gameItem.style.background = 'rgba(255,255,255,0.1)';
-                gameItem.style.borderRadius = '5px';
-                
-                gameItem.innerHTML = `
-                    <div>
-                        <div style="color: #fff;">${name}</div>
-                        <div style="color: rgba(255,255,255,0.5); font-size: 12px;">ID: ${id}</div>
-                    </div>
-                    <button onclick="deleteCustomGame('${id}')" style="padding: 5px 10px; font-size: 12px;">删除</button>
-                `;
-                
-                customGamesList.appendChild(gameItem);
-            }
-
-            modal.style.display = 'block';
-        }
-
-        // 删除自定义游戏
-        function deleteCustomGame(gameId) {
-            if (confirm(`确定要删除 "${gameList[gameId]}" 吗？`)) {
-                // 从游戏列表中删除
-                delete gameList[gameId];
-                
-                // 更新localStorage
-                localStorage.setItem('customGameList', JSON.stringify(gameList));
-                
-                // 从选择框中删除
-                const gameSelect = document.getElementById('gameId');
-                for (let i = 0; i < gameSelect.options.length; i++) {
-                    if (gameSelect.options[i].value === gameId) {
-                        gameSelect.remove(i);
-                        break;
-                    }
-                }
-                
-                // 刷新管理列表
-                manageCustomGames();
-                
-                showNotification('游戏选项已删除');
-            }
-        }
-
-        // 修改页面加载时的处理，确保不覆盖默认游戏
-        document.addEventListener('DOMContentLoaded', function() {
-            loadHistory();
-            
-            // 加载保存的游戏列表
-            const savedGameList = localStorage.getItem('customGameList');
-            if (savedGameList) {
-                const customGames = JSON.parse(savedGameList);
-                // 合并自定义游戏和默认游戏
-                gameList = { ...gameList, ...customGames };
-                
-                // 重建选择框选项
-                const gameSelect = document.getElementById('gameId');
-                // 保留前两个选项（自定义输入和分隔线）
-                while (gameSelect.children.length > 2) {
-                    gameSelect.removeChild(gameSelect.lastChild);
-                }
-                
-                // 添加所有游戏选项
-                for (const [id, name] of Object.entries(gameList)) {
-                    const option = document.createElement('option');
-                    option.value = id;
-                    option.textContent = name;
-                    gameSelect.appendChild(option);
-                }
-            }
-            
-            // 默认显示自定义输入框
-            document.getElementById('customGameId').style.display = 'block';
-        });
-
-        // 修改选择框事件监听器
-        document.getElementById('gameId').addEventListener('change', function() {
-            const customGameIdDiv = document.getElementById('customGameId');
-            const customGameIdInput = document.getElementById('customGameIdInput');
-            
-            if (this.value === 'custom') {
-                customGameIdDiv.style.display = 'block';
-                customGameIdInput.value = '';
-            } else if (this.value === '') {
-                customGameIdDiv.style.display = 'block';
-                customGameIdInput.value = '';
-            } else {
-                customGameIdDiv.style.display = 'none';
-                customGameIdInput.value = this.value;
-            }
-        });
-
-        // 添加保存来源标识的函数
-        function saveSourceTag(source) {
-            if (!source) return;
-            
-            let sourceTags = JSON.parse(localStorage.getItem('sourceTags') || '[]');
-            // 如果已存在，将其移到最前面
-            sourceTags = sourceTags.filter(tag => tag !== source);
-            sourceTags.unshift(source);
-            
-            // 限制保存数量
-            if (sourceTags.length > 10) {
-                sourceTags.pop();
-            }
-            
-            localStorage.setItem('sourceTags', JSON.stringify(sourceTags));
-            updateSourceTags();
-        }
-
-        // 更新来源标识标签显示
-        function updateSourceTags() {
-            const sourceHistory = document.getElementById('sourceHistory');
-            const sourceTags = JSON.parse(localStorage.getItem('sourceTags') || '[]');
-            
-            sourceHistory.innerHTML = sourceTags.map(tag => `
-                <div class="source-tag" onclick="useSourceTag('${tag}')">
-                    ${tag}
-                    <span class="delete-btn" onclick="deleteSourceTag(event, '${tag}')">&times;</span>
-                </div>
-            `).join('');
-        }
-
-        // 使用来源标识
-        function useSourceTag(tag) {
-            document.getElementById('source').value = tag;
-        }
-
-        // 删除来源标识
-        function deleteSourceTag(event, tag) {
-            event.stopPropagation();
-            let sourceTags = JSON.parse(localStorage.getItem('sourceTags') || '[]');
-            sourceTags = sourceTags.filter(t => t !== tag);
-            localStorage.setItem('sourceTags', JSON.stringify(sourceTags));
-            updateSourceTags();
-        }
-
+        // 生成深度链接
         function generateDeeplink() {
-            // 获取输入值
-            let gameId = document.getElementById('gameId').value;
-            // 如果选择了自定义输入，则使用自定义输入的值
-            if (gameId === 'custom') {
-                gameId = document.getElementById('customGameIdInput').value;
-                if (!gameId) {
-                    showNotification('请输入自定义游戏ID', 'error');
-                    return;
-                }
-            }
-            const source = document.getElementById('source').value;
-            const scenario = document.getElementById('scenario').value;
-            const pageCode = document.getElementById('pageCode').value;
-            const noAds = document.getElementById('noAds').checked;
-
-            // 验证输入
-            if (!gameId || !source) {
-                showNotification('请选择游戏并填写来源标识', 'error');
+            const cid = document.getElementById('cid').value.trim();
+            if (!cid) {
+                showNotification('请输入内容ID', 'error');
                 return;
             }
 
-            // 构建JSON
-            const dataObj = {
-                gameId: gameId,
-                source: source
+            const cmtId = document.getElementById('cmtId') ? document.getElementById('cmtId').value : 0;
+            const replyId = document.getElementById('replyId') ? document.getElementById('replyId').value : 0;
+            const fromOuter = document.getElementById('fromOuter').value.trim();
+            const from = fromOuter;
+            const deeplinkPath = selectedValues.deeplinkPath;
+
+            // 构建参数对象，确保数字类型的值是数字而不是字符串，布尔值保持布尔类型
+            const params = {
+                cid: cid,
+                fromOuter: fromOuter,
+                from: from,
+                noSplash: Number(selectedValues.noSplash),
+                skipSplash: Number(selectedValues.skipSplash),
+                noInterstitial: Number(selectedValues.noInterstitial),
+                noInterstitialShow: Number(selectedValues.noInterstitialShow),
+                noLogin: Number(selectedValues.noLogin),
+                defaultShowComment: selectedValues.defaultShowComment === 'true',
+                cmtId: Number(cmtId),
+                defaultShowLiked: selectedValues.defaultShowLiked === 'true',
+                replyId: Number(replyId)
             };
 
-            // 如果选择了无广告，添加相关参数
-            if (noAds) {
-                dataObj.noSplash = 1;
-                dataObj.noInterstitial = 1;
-                dataObj.skipSplash = 1;
-            }
+            // 转换为JSON字符串并进行Base64编码，使用自定义的JSON序列化来移除空格
+            const jsonStr = JSON.stringify(params).replace(/:\s+/g, ':');
+            const base64Data = btoa(encodeURIComponent(jsonStr).replace(/%([0-9A-F]{2})/g,
+                function(match, p1) {
+                    return String.fromCharCode('0x' + p1);
+                }));
 
-            // Base64编码
-            const jsonStr = JSON.stringify(dataObj);
-            const base64Data = /[^\x00-\x7F]/.test(jsonStr) 
-                ? window.btoa(encodeURIComponent(jsonStr).replace(/%([0-9A-F]{2})/g,
-                    function(match, p1) {
-                        return String.fromCharCode('0x' + p1);
-                    }))
-                : window.btoa(jsonStr);
-            
-            // 添加 URLencode 加密步骤
-            const encodedData = encodeURIComponent(base64Data);
-
-            // 生成完整深度链接
-            const deeplink = `wifitutu://deeplink/${scenario}?router=true&pageid=${pageCode}&data=${encodedData}`;
+            // 生成完整的深度链接
+            const deeplink = `wifitutu://deeplink/${deeplinkPath}?router=true&pageid=feed_detail&data=${encodeURIComponent(base64Data)}`;
 
             // 显示结果
-            document.getElementById('deeplinkText').textContent = deeplink;
+            document.getElementById('resultSection').style.display = 'block';
+            document.getElementById('deeplinkResult').textContent = deeplink;
 
             // 添加到历史记录
+            addToHistory(deeplink, params);
+        }
+
+        // 添加到历史记录
+        function addToHistory(deeplink, params) {
             const historyList = document.getElementById('historyList');
-            const historyItem = document.createElement('li');
-            // 获取游戏名称
-            const gameName = gameId === 'custom' ? '自定义游戏' : (gameList[gameId] || gameId);
+            const historyItem = document.createElement('div');
+            historyItem.className = 'history-item';
             
-            // 创建历史记录HTML
-            historyItem.innerHTML = `
-                <div class="history-item">
-                    <span class="history-params">游戏: ${gameName}</span>
-                    <span class="history-params">来源: ${source}</span>
-                    <span class="history-params">场景: ${scenario}</span>
-                    ${noAds ? '<span class="history-params">无广告</span>' : ''}
-                </div>
-                <div class="history-link">${deeplink}</div>
+            const meta = document.createElement('div');
+            meta.className = 'history-meta';
+            meta.innerHTML = `
+                <span class="history-tag">CID: ${params.cid}</span>
+                <span class="history-tag">${params.fromOuter}</span>
+                ${params.noSplash === 1 ? '<span class="history-tag">无闪屏</span>' : ''}
+                ${params.noInterstitial === 1 ? '<span class="history-tag">无插屏</span>' : ''}
             `;
-            historyList.insertBefore(historyItem, historyList.firstChild);
-
-            // 保存历史记录到 localStorage
-            localStorage.setItem('deeplinkHistory', historyList.innerHTML);
-
-            // 限制历史记录数量
-            if (historyList.children.length > 10) {
-                historyList.removeChild(historyList.lastChild);
-                // 更新存储的历史记录
-                localStorage.setItem('deeplinkHistory', historyList.innerHTML);
-            }
-
-            // 在验证通过后，保存来源标识
-            saveSourceTag(source);
-        }
-
-        function copyToClipboard() {
-            const deeplinkText = document.getElementById('deeplinkText').textContent;
-            if (deeplinkText) {
-                navigator.clipboard.writeText(deeplinkText).then(() => {
-                    showNotification('深度链接已复制到剪贴板');
-                });
-            }
-        }
-
-        function decodeDeeplink() {
-            const deeplinkInput = document.getElementById('deeplinkInput').value;
             
+            const link = document.createElement('div');
+            link.className = 'history-link';
+            link.textContent = deeplink;
+            link.onclick = () => {
+                navigator.clipboard.writeText(deeplink);
+                showNotification('已复制到剪贴板');
+            };
+            
+            historyItem.appendChild(meta);
+            historyItem.appendChild(link);
+            
+            historyList.insertBefore(historyItem, historyList.firstChild);
+            
+            // 保存到localStorage
+            const history = JSON.parse(localStorage.getItem('deeplinkHistory') || '[]');
+            history.unshift({ deeplink, params, timestamp: new Date().getTime() });
+            if (history.length > 10) history.pop(); // 只保留最近10条记录
+            localStorage.setItem('deeplinkHistory', JSON.stringify(history));
+        }
+
+        // 清除历史记录
+        function clearHistory() {
+            if (confirm('确定要清除所有历史记录吗？')) {
+                document.getElementById('historyList').innerHTML = '';
+                localStorage.removeItem('deeplinkHistory');
+                showNotification('历史记录已清除');
+            }
+        }
+
+        // 解析深度链接
+        function decodeDeeplink() {
+            const input = document.getElementById('decodeInput').value.trim();
+            if (!input) {
+                showNotification('请输入需要解析的深度链接', 'error');
+                return;
+            }
+
             try {
-                // 提取data参数
-                const url = new URL(deeplinkInput);
+                const url = new URL(input);
                 const data = url.searchParams.get('data');
                 
                 if (!data) {
                     throw new Error('未找到有效的data参数');
                 }
+
+                // URL解码并Base64解码
+                const decodedData = decodeURIComponent(data);
+                const jsonStr = decodeURIComponent(escape(atob(decodedData)));
                 
-                // URL解码
-                const decodedUrl = decodeURIComponent(data);
-                
-                // Base64解码 - 使用更健壮的解码方法
-                let decodedJson;
-                try {
-                    // 先尝试直接Base64解码
-                    decodedJson = atob(decodedUrl);
-                } catch (e) {
-                    // 如果失败，尝试处理非ASCII字符
-                    try {
-                        decodedJson = decodeURIComponent(escape(atob(decodedUrl)));
-                    } catch (e2) {
-                        // 如果还是失败，尝试另一种解码方式
-                        decodedJson = decodeURIComponent(Array.from(atob(decodedUrl), char => 
-                            '%' + char.charCodeAt(0).toString(16).padStart(2, '0')).join(''));
-                    }
-                }
-                
-                // 修复JSON格式 - 给没有引号的属性名添加引号
-                decodedJson = decodedJson.replace(/([{,]\s*)([a-zA-Z0-9_]+)(\s*:)/g, '$1"$2"$3');
-                
-                // 解析JSON
-                const jsonObj = JSON.parse(decodedJson);
-                
-                // 验证游戏ID，但不限制必须在列表中
-                if (jsonObj.gameId) {
-                    const gameName = gameList[jsonObj.gameId];
-                    if (gameName) {
-                        jsonObj.gameName = gameName;
-                    }
-                }
-                
-                // 格式化JSON显示
-                const formattedJson = JSON.stringify(jsonObj, null, 2);
+                // 格式化JSON，确保值前面没有空格
+                const params = JSON.parse(jsonStr);
+                const formattedJson = JSON.stringify(params, null, 2).replace(/:\s+/g, ':');
                 
                 // 显示结果
-                document.getElementById('decodeResult').style.display = 'block';
-                document.getElementById('decodedData').textContent = formattedJson;
+                const decodeResult = document.getElementById('decodeResult');
+                decodeResult.style.display = 'block';
+                decodeResult.textContent = formattedJson;
             } catch (error) {
                 showNotification('解析失败：' + error.message, 'error');
             }
         }
 
-        // 添加清除历史记录的函数
-        function clearHistory() {
-            if (confirm('确定要清除所有生成记录吗？')) {
-                const historyList = document.getElementById('historyList');
-                historyList.innerHTML = '';
-                localStorage.removeItem('deeplinkHistory');
-                showNotification('生成记录已清除');
-            }
+        // 复制到剪贴板
+        function copyToClipboard() {
+            const deeplinkResult = document.getElementById('deeplinkResult');
+            const text = deeplinkResult.textContent;
+
+            navigator.clipboard.writeText(text).then(() => {
+                showNotification('已复制到剪贴板');
+            }).catch(err => {
+                showNotification('复制失败', 'error');
+            });
         }
 
-        // 关闭管理弹窗
-        function closeManageModal() {
-            document.getElementById('manageModal').style.display = 'none';
+        // 加载历史记录
+        function loadHistory() {
+            const history = JSON.parse(localStorage.getItem('deeplinkHistory') || '[]');
+            const historyList = document.getElementById('historyList');
+            
+            history.forEach(item => {
+                const historyItem = document.createElement('div');
+                historyItem.className = 'history-item';
+                
+                const meta = document.createElement('div');
+                meta.className = 'history-meta';
+                meta.innerHTML = `
+                    <span class="history-tag">CID: ${item.params.cid}</span>
+                    <span class="history-tag">${item.params.fromOuter}</span>
+                    ${item.params.noSplash === 1 ? '<span class="history-tag">无闪屏</span>' : ''}
+                    ${item.params.noInterstitial === 1 ? '<span class="history-tag">无插屏</span>' : ''}
+                `;
+                
+                const link = document.createElement('div');
+                link.className = 'history-link';
+                link.textContent = item.deeplink;
+                link.onclick = () => {
+                    navigator.clipboard.writeText(item.deeplink);
+                    showNotification('已复制到剪贴板');
+                };
+                
+                historyItem.appendChild(meta);
+                historyItem.appendChild(link);
+                historyList.appendChild(historyItem);
+            });
+        }
+
+        // 添加键盘快捷键
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                generateDeeplink();
+            }
+        });
+
+        // 页面加载时加载历史记录
+        document.addEventListener('DOMContentLoaded', loadHistory);
+
+        // 添加高级选项切换功能
+        function toggleAdvancedOptions(button) {
+            button.classList.toggle('active');
+            button.nextElementSibling.classList.toggle('show');
         }
     </script>
 </body>
-</html>
+</html> 
