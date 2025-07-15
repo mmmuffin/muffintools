@@ -1,708 +1,121 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>内容DeepLink生成器</title>
+    <meta charset="utf-8">
+    <title>Excel地图标记工具</title>
+    <script type="text/javascript" src="https://api.map.baidu.com/api?v=3.0&ak=lPUDavXluAPbmJFdOzLCYEzDT5IiWTps"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            min-height: 100vh;
-            background: linear-gradient(120deg, #f6f8ff, #e9f1ff);
-            color: #2c3e50;
-            position: relative;
-            overflow-x: hidden;
-            padding: 20px;
-        }
-
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
+        #map {
             width: 100%;
-            height: 100%;
-            background: 
-                radial-gradient(circle at 20% 30%, rgba(41, 196, 255, 0.05) 0%, transparent 50%),
-                radial-gradient(circle at 80% 70%, rgba(255, 41, 111, 0.05) 0%, transparent 50%);
-            animation: backgroundPulse 10s ease-in-out infinite alternate;
-            z-index: -1;
+            height: 600px;
         }
-
-        @keyframes backgroundPulse {
-            0% { transform: scale(1); }
-            100% { transform: scale(1.1); }
-        }
-
         .container {
-            max-width: 1400px;
+            padding: 20px;
+            max-width: 1200px;
             margin: 0 auto;
-            padding: 20px;
-            display: flex;
-            gap: 30px;
         }
-
-        .left-panel {
-            flex: 0 0 600px;
-        }
-
-        .right-panel {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .section {
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 30px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-            height: fit-content;
-        }
-
-        h1, h2 {
-            color: #1a73e8;
+        .upload-section {
             margin-bottom: 20px;
         }
-
-        h1 {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .form-group {
+        .instructions {
             margin-bottom: 20px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 8px;
-            color: #5f6368;
-            font-weight: 500;
-        }
-
-        input[type="text"],
-        input[type="number"],
-        select {
-            width: 100%;
-            padding: 12px 15px;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 14px;
-            color: #2c3e50;
-            background: #fff;
-            transition: all 0.3s;
-        }
-
-        input:focus,
-        select:focus {
-            outline: none;
-            border-color: #1a73e8;
-            box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.1);
-        }
-
-        .toggle-group {
-            display: flex;
-            gap: 10px;
-        }
-
-        .toggle-btn {
-            flex: 1;
             padding: 10px;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            background: #fff;
-            color: #5f6368;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .toggle-btn.active {
-            background: #1a73e8;
-            color: #fff;
-            border-color: #1a73e8;
-        }
-
-        .generate-btn {
-            width: 100%;
-            padding: 15px;
-            background: linear-gradient(45deg, #1a73e8, #34a853);
-            color: #fff;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            margin-top: 20px;
-        }
-
-        .generate-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(26, 115, 232, 0.2);
-        }
-
-        .result-box {
-            background: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            border: 1px solid #e0e0e0;
-            margin-bottom: 15px;
-            word-break: break-all;
-        }
-
-        .copy-btn {
-            background: #1a73e8;
-            color: #fff;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .copy-btn:hover {
-            background: #1557b0;
-        }
-
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 15px 25px;
-            border-radius: 8px;
-            color: #fff;
-            font-weight: 500;
-            display: none;
-            z-index: 1000;
-            animation: slideIn 0.3s ease-out;
-        }
-
-        @keyframes slideIn {
-            from {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-
-        .success {
-            background: #48bb78;
-        }
-
-        .error {
-            background: #e53e3e;
-        }
-
-        .history-item {
-            background: #fff;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            border: 1px solid #e0e0e0;
-            transition: all 0.3s;
-        }
-
-        .history-item:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-        }
-
-        .history-meta {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-
-        .history-tag {
-            background: #f1f3f4;
-            padding: 4px 8px;
+            background-color: #f5f5f5;
             border-radius: 4px;
-            font-size: 12px;
-            color: #5f6368;
-        }
-
-        .history-link {
-            word-break: break-all;
-            color: #1a73e8;
-            cursor: pointer;
-        }
-
-        .history-link:hover {
-            text-decoration: underline;
-        }
-
-        .clear-btn {
-            background: #f1f3f4;
-            color: #5f6368;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-size: 14px;
-        }
-
-        .clear-btn:hover {
-            background: #e4e6e7;
-        }
-
-        .section-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .decode-result {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            font-family: monospace;
-            white-space: pre-wrap;
-            margin-top: 15px;
-            display: none;
-        }
-
-        .advanced-options {
-            margin-top: 20px;
-            border-top: 1px solid #e0e0e0;
-            padding-top: 20px;
-        }
-
-        .advanced-toggle {
-            width: 100%;
-            padding: 10px;
-            background: #f8f9fa;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            color: #5f6368;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            font-size: 14px;
-            transition: all 0.3s;
-        }
-
-        .advanced-toggle:hover {
-            background: #f1f3f4;
-        }
-
-        .advanced-toggle::after {
-            content: '▼';
-            font-size: 12px;
-            transition: transform 0.3s;
-        }
-
-        .advanced-toggle.active::after {
-            transform: rotate(180deg);
-        }
-
-        .advanced-content {
-            display: none;
-            padding: 20px;
-            background: #f8f9fa;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            margin-top: 10px;
-        }
-
-        .advanced-content.show {
-            display: block;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- 左侧面板 - 操作区 -->
-        <div class="left-panel">
-            <div class="section">
-                <h1>内容DeepLink生成器</h1>
-                
-                <div class="form-group">
-                    <label for="cid">内容ID (cid)</label>
-                    <input type="text" id="cid" placeholder="请输入内容ID">
-                </div>
-
-                <div class="form-group">
-                    <label>链接路径 (deeplinkPath)</label>
-                    <div class="toggle-group">
-                        <button class="toggle-btn active" data-value="floatPop" id="deeplinkPathFloatPop" onclick="selectDeeplinkPath(this)">floatPop</button>
-                        <button class="toggle-btn" data-value="push" id="deeplinkPathPush" onclick="selectDeeplinkPath(this)">push</button>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="fromOuter">fromOuter / from</label>
-                    <input type="text" id="fromOuter" value="publicpush" placeholder="请输入fromOuter/from">
-                </div>
-
-                <div class="form-group">
-                    <label>是否有闪屏 (noSplash)</label>
-                    <div class="toggle-group">
-                        <button class="toggle-btn active" data-value="1" onclick="toggleButton(this, 'noSplash')">无闪屏</button>
-                        <button class="toggle-btn" data-value="0" onclick="toggleButton(this, 'noSplash')">有闪屏</button>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>跳过闪屏 (skipSplash)</label>
-                    <div class="toggle-group">
-                        <button class="toggle-btn active" data-value="1" onclick="toggleButton(this, 'skipSplash')">跳过</button>
-                        <button class="toggle-btn" data-value="0" onclick="toggleButton(this, 'skipSplash')">不跳过</button>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>屏蔽插屏 (noInterstitial)</label>
-                    <div class="toggle-group">
-                        <button class="toggle-btn" data-value="1" onclick="toggleButton(this, 'noInterstitial')">屏蔽</button>
-                        <button class="toggle-btn active" data-value="0" onclick="toggleButton(this, 'noInterstitial')">不屏蔽</button>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>插屏展示拦截 (noInterstitialShow)</label>
-                    <div class="toggle-group">
-                        <button class="toggle-btn active" data-value="1" onclick="toggleButton(this, 'noInterstitialShow')">拦截</button>
-                        <button class="toggle-btn" data-value="0" onclick="toggleButton(this, 'noInterstitialShow')">不拦截</button>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>是否跳过登录 (noLogin)</label>
-                    <div class="toggle-group">
-                        <button class="toggle-btn active" data-value="1" onclick="toggleButton(this, 'noLogin')">是</button>
-                        <button class="toggle-btn" data-value="0" onclick="toggleButton(this, 'noLogin')">否</button>
-                    </div>
-                </div>
-
-                <div class="advanced-options">
-                    <button class="advanced-toggle" onclick="toggleAdvancedOptions(this)">高级选项（评论和点赞设置）</button>
-                    <div class="advanced-content">
-                        <div class="form-group">
-                            <label>是否展示评论 (defaultShowComment)</label>
-                            <div class="toggle-group">
-                                <button class="toggle-btn" data-value="true" onclick="toggleButton(this, 'defaultShowComment')">是</button>
-                                <button class="toggle-btn active" data-value="false" onclick="toggleButton(this, 'defaultShowComment')">否</button>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="cmtId">默认打开的评论ID (cmtId)</label>
-                            <input type="number" id="cmtId" value="0">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="channelId">频道ID (channelId)</label>
-                            <input type="number" id="channelId" value="600002">
-                        </div>
-
-                        <div class="form-group">
-                            <label>是否展示点赞 (defaultShowLiked)</label>
-                            <div class="toggle-group">
-                                <button class="toggle-btn" data-value="true" onclick="toggleButton(this, 'defaultShowLiked')">是</button>
-                                <button class="toggle-btn active" data-value="false" onclick="toggleButton(this, 'defaultShowLiked')">否</button>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="replyId">默认打开的回复ID (replyId)</label>
-                            <input type="number" id="replyId" value="0">
-                        </div>
-                    </div>
-                </div>
-
-                <button class="generate-btn" onclick="generateDeeplink()">生成深度链接</button>
-            </div>
+        <div class="instructions">
+            <h2>使用说明：</h2>
+            <p>1. 准备Excel文件，第一列为经度，第二列为纬度，第三列为店名</p>
+            <p>2. 点击"选择文件"按钮上传Excel文件</p>
+            <p>3. 地图上将显示所有位置点，鼠标悬停可查看店名</p>
         </div>
-
-        <!-- 右侧面板 - 结果展示区 -->
-        <div class="right-panel">
-            <!-- 生成结果区域 -->
-            <div class="section" id="resultSection" style="display: none;">
-                <h2>生成结果</h2>
-                <div class="result-box" id="deeplinkResult"></div>
-                <button class="copy-btn" onclick="copyToClipboard()">复制链接</button>
-            </div>
-
-            <!-- 链接解析区域 -->
-            <div class="section">
-                <h2>深度链接解析</h2>
-                <div class="form-group">
-                    <input type="text" id="decodeInput" placeholder="请输入需要解析的深度链接">
-                </div>
-                <button class="generate-btn" onclick="decodeDeeplink()">解析链接</button>
-                <pre class="decode-result" id="decodeResult"></pre>
-            </div>
-
-            <!-- 历史记录区域 -->
-            <div class="section">
-                <div class="section-header">
-                    <h2>生成历史</h2>
-                    <button class="clear-btn" onclick="clearHistory()">清除历史</button>
-                </div>
-                <div id="historyList"></div>
-            </div>
+        <div class="upload-section">
+            <input type="file" id="fileInput" accept=".xlsx,.xls">
         </div>
+        <div id="map"></div>
     </div>
 
-    <div class="notification" id="notification"></div>
-
     <script>
-        // 存储当前选中的值
-        const selectedValues = {
-            deeplinkPath: 'floatPop',
-            fromOuter: 'floatPop',
-            noSplash: '1',
-            skipSplash: '1',
-            noInterstitial: '0',
-            noInterstitialShow: '1',
-            noLogin: '1',
-            defaultShowComment: 'false',
-            defaultShowLiked: 'false',
-            channelId: '600002'
-        };
+        // 初始化地图
+        var map = new BMap.Map("map");
+        // 初始化地图中心点（默认北京）
+        var point = new BMap.Point(116.404, 39.915);
+        map.centerAndZoom(point, 12);
+        // 添加地图控件
+        map.addControl(new BMap.NavigationControl());
+        map.addControl(new BMap.ScaleControl());
+        map.enableScrollWheelZoom();
 
-        // 选择deeplinkPath单选按钮
-        function selectDeeplinkPath(button) {
-            document.querySelectorAll('#deeplinkPathFloatPop, #deeplinkPathPush').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            button.classList.add('active');
-            selectedValues.deeplinkPath = button.dataset.value;
-        }
+        // 处理文件上传
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            var file = e.target.files[0];
+            var reader = new FileReader();
 
-        // fromOuter输入框同步selectedValues
-        document.getElementById('fromOuter').addEventListener('input', function(e) {
-            selectedValues.fromOuter = e.target.value;
-        });
+            reader.onload = function(e) {
+                var data = new Uint8Array(e.target.result);
+                var workbook = XLSX.read(data, {type: 'array'});
+                var firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                var jsonData = XLSX.utils.sheet_to_json(firstSheet, {header: 1});
 
-        // channelId输入框同步selectedValues
-        document.getElementById('channelId').addEventListener('input', function(e) {
-            selectedValues.channelId = e.target.value;
-        });
+                // 清除现有标记
+                map.clearOverlays();
 
-        // 切换按钮状态
-        function toggleButton(button, key) {
-            const parent = button.parentElement;
-            parent.querySelectorAll('.toggle-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            button.classList.add('active');
-            selectedValues[key] = button.dataset.value;
-        }
+                // 创建边界对象用于自适应缩放
+                var bounds = new BMap.Bounds();
 
-        // 显示通知
-        function showNotification(message, type = 'success') {
-            const notification = document.getElementById('notification');
-            notification.textContent = message;
-            notification.className = `notification ${type}`;
-            notification.style.display = 'block';
-            
-            setTimeout(() => {
-                notification.style.display = 'none';
-            }, 3000);
-        }
+                // 从第二行开始处理数据（跳过表头）
+                for (var i = 1; i < jsonData.length; i++) {
+                    var row = jsonData[i];
+                    if (row.length >= 3) {
+                        var lng = parseFloat(row[0]);
+                        var lat = parseFloat(row[1]);
+                        var name = row[2];
 
-        // 生成深度链接
-        function generateDeeplink() {
-            const cid = document.getElementById('cid').value.trim();
-            if (!cid) {
-                showNotification('请输入内容ID', 'error');
-                return;
-            }
+                        if (!isNaN(lng) && !isNaN(lat)) {
+                            var point = new BMap.Point(lng, lat);
+                            var marker = new BMap.Marker(point);
+                            
+                            // 创建信息窗口
+                            var label = new BMap.Label(name, {
+                                offset: new BMap.Size(20, -10)
+                            });
+                            label.setStyle({
+                                display: "none",
+                                border: "1px solid #ccc",
+                                padding: "5px",
+                                borderRadius: "3px",
+                                backgroundColor: "white"
+                            });
+                            
+                            marker.setLabel(label);
+                            
+                            // 添加鼠标事件
+                            marker.addEventListener("mouseover", function() {
+                                this.getLabel().setStyle({display: "block"});
+                            });
+                            marker.addEventListener("mouseout", function() {
+                                this.getLabel().setStyle({display: "none"});
+                            });
 
-            const cmtId = document.getElementById('cmtId') ? document.getElementById('cmtId').value : 0;
-            const replyId = document.getElementById('replyId') ? document.getElementById('replyId').value : 0;
-            const channelId = document.getElementById('channelId') ? document.getElementById('channelId').value : 600002;
-            const fromOuter = document.getElementById('fromOuter').value.trim();
-            const from = fromOuter;
-            const deeplinkPath = selectedValues.deeplinkPath;
-
-            // 构建参数对象，确保数字类型的值是数字而不是字符串，布尔值保持布尔类型
-            const params = {
-                cid: cid,
-                fromOuter: fromOuter,
-                from: from,
-                noSplash: Number(selectedValues.noSplash),
-                skipSplash: Number(selectedValues.skipSplash),
-                noInterstitial: Number(selectedValues.noInterstitial),
-                noInterstitialShow: Number(selectedValues.noInterstitialShow),
-                noLogin: Number(selectedValues.noLogin),
-                defaultShowComment: selectedValues.defaultShowComment === 'true',
-                cmtId: Number(cmtId),
-                defaultShowLiked: selectedValues.defaultShowLiked === 'true',
-                replyId: Number(replyId),
-                channelId: Number(channelId)
-            };
-
-            // 转换为JSON字符串并进行Base64编码，使用自定义的JSON序列化来移除空格
-            const jsonStr = JSON.stringify(params).replace(/:\s+/g, ':');
-            const base64Data = btoa(encodeURIComponent(jsonStr).replace(/%([0-9A-F]{2})/g,
-                function(match, p1) {
-                    return String.fromCharCode('0x' + p1);
-                }));
-
-            // 生成完整的深度链接
-            const deeplink = `wifitutu://deeplink/${deeplinkPath}?router=true&pageid=feed_detail&data=${encodeURIComponent(base64Data)}`;
-
-            // 显示结果
-            document.getElementById('resultSection').style.display = 'block';
-            document.getElementById('deeplinkResult').textContent = deeplink;
-
-            // 添加到历史记录
-            addToHistory(deeplink, params);
-        }
-
-        // 添加到历史记录
-        function addToHistory(deeplink, params) {
-            const historyList = document.getElementById('historyList');
-            const historyItem = document.createElement('div');
-            historyItem.className = 'history-item';
-            
-            const meta = document.createElement('div');
-            meta.className = 'history-meta';
-            meta.innerHTML = `
-                <span class="history-tag">CID: ${params.cid}</span>
-                <span class="history-tag">${params.fromOuter}</span>
-                ${params.noSplash === 1 ? '<span class="history-tag">无闪屏</span>' : ''}
-                ${params.noInterstitial === 1 ? '<span class="history-tag">无插屏</span>' : ''}
-            `;
-            
-            const link = document.createElement('div');
-            link.className = 'history-link';
-            link.textContent = deeplink;
-            link.onclick = () => {
-                navigator.clipboard.writeText(deeplink);
-                showNotification('已复制到剪贴板');
-            };
-            
-            historyItem.appendChild(meta);
-            historyItem.appendChild(link);
-            
-            historyList.insertBefore(historyItem, historyList.firstChild);
-            
-            // 保存到localStorage
-            const history = JSON.parse(localStorage.getItem('deeplinkHistory') || '[]');
-            history.unshift({ deeplink, params, timestamp: new Date().getTime() });
-            if (history.length > 10) history.pop(); // 只保留最近10条记录
-            localStorage.setItem('deeplinkHistory', JSON.stringify(history));
-        }
-
-        // 清除历史记录
-        function clearHistory() {
-            if (confirm('确定要清除所有历史记录吗？')) {
-                document.getElementById('historyList').innerHTML = '';
-                localStorage.removeItem('deeplinkHistory');
-                showNotification('历史记录已清除');
-            }
-        }
-
-        // 解析深度链接
-        function decodeDeeplink() {
-            const input = document.getElementById('decodeInput').value.trim();
-            if (!input) {
-                showNotification('请输入需要解析的深度链接', 'error');
-                return;
-            }
-
-            try {
-                const url = new URL(input);
-                const data = url.searchParams.get('data');
-                
-                if (!data) {
-                    throw new Error('未找到有效的data参数');
+                            map.addOverlay(marker);
+                            bounds.extend(point);
+                        }
+                    }
                 }
 
-                // URL解码并Base64解码
-                const decodedData = decodeURIComponent(data);
-                const jsonStr = decodeURIComponent(escape(atob(decodedData)));
-                
-                // 格式化JSON，确保值前面没有空格
-                const params = JSON.parse(jsonStr);
-                const formattedJson = JSON.stringify(params, null, 2).replace(/:\s+/g, ':');
-                
-                // 显示结果
-                const decodeResult = document.getElementById('decodeResult');
-                decodeResult.style.display = 'block';
-                decodeResult.textContent = formattedJson;
-            } catch (error) {
-                showNotification('解析失败：' + error.message, 'error');
-            }
-        }
+                // 调整地图视野
+                if (!bounds.isEmpty()) {
+                    map.setViewport(bounds);
+                }
+            };
 
-        // 复制到剪贴板
-        function copyToClipboard() {
-            const deeplinkResult = document.getElementById('deeplinkResult');
-            const text = deeplinkResult.textContent;
-
-            navigator.clipboard.writeText(text).then(() => {
-                showNotification('已复制到剪贴板');
-            }).catch(err => {
-                showNotification('复制失败', 'error');
-            });
-        }
-
-        // 加载历史记录
-        function loadHistory() {
-            const history = JSON.parse(localStorage.getItem('deeplinkHistory') || '[]');
-            const historyList = document.getElementById('historyList');
-            
-            history.forEach(item => {
-                const historyItem = document.createElement('div');
-                historyItem.className = 'history-item';
-                
-                const meta = document.createElement('div');
-                meta.className = 'history-meta';
-                meta.innerHTML = `
-                    <span class="history-tag">CID: ${item.params.cid}</span>
-                    <span class="history-tag">${item.params.fromOuter}</span>
-                    ${item.params.noSplash === 1 ? '<span class="history-tag">无闪屏</span>' : ''}
-                    ${item.params.noInterstitial === 1 ? '<span class="history-tag">无插屏</span>' : ''}
-                `;
-                
-                const link = document.createElement('div');
-                link.className = 'history-link';
-                link.textContent = item.deeplink;
-                link.onclick = () => {
-                    navigator.clipboard.writeText(item.deeplink);
-                    showNotification('已复制到剪贴板');
-                };
-                
-                historyItem.appendChild(meta);
-                historyItem.appendChild(link);
-                historyList.appendChild(historyItem);
-            });
-        }
-
-        // 添加键盘快捷键
-        document.addEventListener('keydown', function(e) {
-            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-                generateDeeplink();
-            }
+            reader.readAsArrayBuffer(file);
         });
-
-        // 页面加载时加载历史记录
-        document.addEventListener('DOMContentLoaded', loadHistory);
-
-        // 添加高级选项切换功能
-        function toggleAdvancedOptions(button) {
-            button.classList.toggle('active');
-            button.nextElementSibling.classList.toggle('show');
-        }
     </script>
 </body>
 </html> 
