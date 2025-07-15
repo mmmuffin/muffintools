@@ -1,121 +1,629 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
-    <meta charset="utf-8">
-    <title>Excel地图标记工具</title>
-    <script type="text/javascript" src="https://api.map.baidu.com/api?v=3.0&ak=lPUDavXluAPbmJFdOzLCYEzDT5IiWTps"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
+    <meta charset="UTF-8">
+    <title>店铺日活地图工具</title>
     <style>
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', Arial, sans-serif;
+            background: #f4f6fa;
+            margin: 0;
+            padding: 0;
+        }
+        .main-layout {
+            display: flex;
+            max-width: 1400px;
+            margin: 36px auto 0 auto;
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 6px 32px rgba(45,140,240,0.10);
+            min-height: 760px;
+            overflow: hidden;
+        }
+        .sidebar {
+            width: 370px;
+            border-right: 1.5px solid #e6eaf0;
+            padding: 38px 20px 28px 32px;
+            background: #fafdff;
+            display: flex;
+            flex-direction: column;
+        }
+        .content {
+            flex: 1;
+            padding: 38px 38px 28px 38px;
+            display: flex;
+            flex-direction: column;
+            background: #f7f9fa;
+        }
+        h2 {
+            text-align: center;
+            color: #2d8cf0;
+            margin-bottom: 22px;
+            letter-spacing: 2px;
+            font-size: 26px;
+            font-weight: 700;
+        }
+        #upload {
+            display: none;
+        }
+        .upload-label {
+            display: block;
+            width: 100%;
+            text-align: center;
+            padding: 14px 0;
+            background: linear-gradient(90deg, #2d8cf0 0%, #57a3f3 100%);
+            color: #fff;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 22px;
+            transition: background 0.2s, box-shadow 0.2s;
+            box-shadow: 0 2px 8px rgba(45,140,240,0.08);
+        }
+        .upload-label:hover {
+            background: linear-gradient(90deg, #57a3f3 0%, #2d8cf0 100%);
+            box-shadow: 0 4px 16px rgba(45,140,240,0.13);
+        }
+        #result {
+            margin: 10px 0 18px 0;
+            font-size: 16px;
+            color: #333;
+            background: #f0faff;
+            border-left: 4px solid #2d8cf0;
+            padding: 12px 20px;
+            border-radius: 7px;
+            min-height: 24px;
+            font-weight: 500;
+        }
+        .stat {
+            font-size: 18px;
+            margin-bottom: 18px;
+            color: #222;
+            font-weight: 600;
+        }
+        #filterBar {
+            margin-bottom: 18px;
+        }
+        .filter-btn {
+            border: none;
+            background: #f0f0f0;
+            color: #333;
+            padding: 8px 22px;
+            border-radius: 7px;
+            margin-right: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-bottom: 6px;
+            font-weight: 500;
+            transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+            box-shadow: 0 1px 4px rgba(45,140,240,0.04);
+        }
+        .filter-btn:hover {
+            background: #e6f7ff;
+            color: #2d8cf0;
+        }
+        .filter-btn[style*='background:#2d8cf0'] {
+            box-shadow: 0 2px 8px rgba(45,140,240,0.13);
+        }
+        .filter-btn[style*='background:#52c41a'] {
+            box-shadow: 0 2px 8px rgba(82,196,26,0.13);
+        }
+        .filter-btn[style*='background:#aaa'] {
+            box-shadow: 0 2px 8px rgba(170,170,170,0.13);
+        }
+        .shop-list {
+            flex: 1;
+            overflow-y: auto;
+            margin-top: 10px;
+            background: #f7f9fa;
+            border-radius: 8px;
+            padding: 8px 0 8px 0;
+            box-shadow: 0 1px 4px rgba(45,140,240,0.04);
+        }
+        .shop-item {
+            padding: 13px 16px;
+            border-radius: 7px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            background: #fff;
+            border: 1.5px solid #e6f0fa;
+            transition: background 0.2s, border 0.2s, box-shadow 0.2s;
+            display: flex;
+            align-items: center;
+            font-size: 16px;
+            font-weight: 500;
+            box-shadow: 0 1px 4px rgba(45,140,240,0.04);
+        }
+        .shop-item.active, .shop-item:hover {
+            background: #e6f7ff;
+            border: 1.5px solid #2d8cf0;
+            box-shadow: 0 2px 8px rgba(45,140,240,0.10);
+        }
+        .shop-name {
+            flex: 1;
+            font-size: 16px;
+            color: #2d8cf0;
+            font-weight: 600;
+        }
+        .shop-uv {
+            font-size: 15px;
+            color: #888;
+            margin-left: 10px;
+            font-weight: 400;
+        }
+        .shop-uv .uv-num {
+            color: #fa541c;
+            font-weight: 600;
+        }
+        .shop-uv .order-tag {
+            color: #52c41a;
+            font-size: 14px;
+            margin-left: 2px;
+            font-weight: 600;
+        }
         #map {
             width: 100%;
             height: 600px;
+            border-radius: 14px;
+            box-shadow: 0 4px 24px rgba(45,140,240,0.10);
+            border: 1.5px solid #e6eaf0;
+            background: #eaf3fa;
         }
-        .container {
-            padding: 20px;
-            max-width: 1200px;
-            margin: 0 auto;
+        .info-card-modal {
+            position: fixed;
+            left: 0; top: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.18);
+            z-index: 9999;
+            display: none;
+            align-items: center;
+            justify-content: center;
         }
-        .upload-section {
-            margin-bottom: 20px;
+        .info-card {
+            width: 440px;
+            height: 360px;
+            background: #fff;
+            border-radius: 14px;
+            box-shadow: 0 8px 32px rgba(45,140,240,0.18);
+            border: none;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            animation: popin 0.18s cubic-bezier(.68,-0.55,.27,1.55);
         }
-        .instructions {
-            margin-bottom: 20px;
-            padding: 10px;
-            background-color: #f5f5f5;
-            border-radius: 4px;
+        @keyframes popin {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .info-card-header {
+            padding: 14px 22px;
+            background: linear-gradient(90deg, #2d8cf0 0%, #57a3f3 100%);
+            color: #fff;
+            font-size: 20px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            border-bottom: 1.5px solid #e6eaf0;
+        }
+        .close-btn {
+            position: absolute;
+            right: 16px;
+            top: 12px;
+            font-size: 24px;
+            color: #fff;
+            background: none;
+            border: none;
+            cursor: pointer;
+            z-index: 2;
+            font-weight: bold;
+            transition: color 0.2s;
+        }
+        .close-btn:hover {
+            color: #fa541c;
+        }
+        #echart {
+            flex: 1;
+            width: 100%;
+            height: 100%;
+            padding: 0 16px 16px 16px;
+            background: #fff;
+        }
+        .no-data {
+            text-align: center;
+            color: #aaa;
+            font-size: 16px;
+            margin-top: 40px;
+        }
+        .top-btn {
+            margin-left: 14px;
+            background: #fffbe6;
+            border: 1.5px solid #faad14;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #faad14;
+            font-size: 18px;
+            cursor: pointer;
+            outline: none;
+            transition: background 0.2s, border 0.2s, box-shadow 0.2s;
+            box-shadow: 0 1px 4px rgba(250,173,20,0.10);
+            padding: 0;
+        }
+        .top-btn svg {
+            width: 18px;
+            height: 18px;
+            display: block;
+        }
+        .top-btn:hover {
+            background: #faad14;
+            border-color: #faad14;
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(250,173,20,0.18);
+        }
+        .top-btn:hover svg path {
+            fill: #fff;
+            stroke: #fff;
+        }
+        .shop-item.top .top-btn {
+            background: #faad14;
+            border-color: #faad14;
+            color: #fff;
+        }
+        .shop-item.top .top-btn svg path {
+            fill: #fff;
+            stroke: #fff;
+        }
+        @media (max-width: 900px) {
+            .main-layout { flex-direction: column; min-width: 0; }
+            .sidebar { width: 100%; border-right: none; border-bottom: 1px solid #f0f0f0; padding: 18px 8px 18px 8px; }
+            .content { padding: 12px; }
+            #map { height: 340px; }
+            .info-card { width: 98vw; height: 260px; }
         }
     </style>
+    <!-- 百度地图API -->
+    <script type="text/javascript" src="https://api.map.baidu.com/api?v=3.0&ak=lPUDavXluAPbmJFdOzLCYEzDT5IiWTps"></script>
+    <!-- ECharts -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+    <!-- SheetJS -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 </head>
 <body>
-    <div class="container">
-        <div class="instructions">
-            <h2>使用说明：</h2>
-            <p>1. 准备Excel文件，第一列为经度，第二列为纬度，第三列为店名</p>
-            <p>2. 点击"选择文件"按钮上传Excel文件</p>
-            <p>3. 地图上将显示所有位置点，鼠标悬停可查看店名</p>
+    <div class="main-layout">
+        <div class="sidebar">
+            <h2>店铺日活地图工具</h2>
+            <label class="upload-label" for="upload">选择Excel文件导入</label>
+            <input type="file" id="upload" accept=".xlsx,.xls" />
+            <div id="result">请先导入Excel文件</div>
+            <div class="stat" id="stat"></div>
+            <div id="filterBar"></div>
+            <input type="text" id="searchInput" class="search-input" placeholder="搜索店铺名..." />
+            <div class="shop-list" id="shopList"></div>
         </div>
-        <div class="upload-section">
-            <input type="file" id="fileInput" accept=".xlsx,.xls">
+        <div class="content">
+            <div id="map"></div>
         </div>
-        <div id="map"></div>
+    </div>
+
+    <!-- 弹窗卡片（居中模态） -->
+    <div id="infoCardModal" class="info-card-modal">
+        <div id="infoCard" class="info-card">
+            <button class="close-btn" id="closeCard">×</button>
+            <div class="info-card-header" id="infoCardHeader"></div>
+            <div id="echart"></div>
+        </div>
     </div>
 
     <script>
-        // 初始化地图
-        var map = new BMap.Map("map");
-        // 初始化地图中心点（默认北京）
-        var point = new BMap.Point(116.404, 39.915);
-        map.centerAndZoom(point, 12);
-        // 添加地图控件
-        map.addControl(new BMap.NavigationControl());
-        map.addControl(new BMap.ScaleControl());
-        map.enableScrollWheelZoom();
+        let map, shopData = [], markers = [], activeIdx = -1;
+        let myChart = null; // 全局唯一 ECharts 实例
+        let infoCardModal = document.getElementById('infoCardModal');
+        let infoCard = document.getElementById('infoCard');
+        let infoCardHeader = document.getElementById('infoCardHeader');
+        let resultDiv = document.getElementById('result');
+        let statDiv = document.getElementById('stat');
+        let shopListDiv = document.getElementById('shopList');
+        let closeCardBtn = document.getElementById('closeCard');
+        let filterType = 'all'; // all, order, noorder, top
+        let searchKeyword = '';
+        let topShops = [];
 
-        // 处理文件上传
-        document.getElementById('fileInput').addEventListener('change', function(e) {
-            var file = e.target.files[0];
-            var reader = new FileReader();
+        // 默认南京中心点
+        const NANJING_CENTER = {lng: 118.796877, lat: 32.060255};
 
-            reader.onload = function(e) {
-                var data = new Uint8Array(e.target.result);
-                var workbook = XLSX.read(data, {type: 'array'});
-                var firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                var jsonData = XLSX.utils.sheet_to_json(firstSheet, {header: 1});
+        // 初始化百度地图
+        function initMap(center = NANJING_CENTER) {
+            map = new BMap.Map("map");
+            map.centerAndZoom(new BMap.Point(center.lng, center.lat), 11);
+            map.enableScrollWheelZoom(true);
+        }
 
-                // 清除现有标记
-                map.clearOverlays();
-
-                // 创建边界对象用于自适应缩放
-                var bounds = new BMap.Bounds();
-
-                // 从第二行开始处理数据（跳过表头）
-                for (var i = 1; i < jsonData.length; i++) {
-                    var row = jsonData[i];
-                    if (row.length >= 3) {
-                        var lng = parseFloat(row[0]);
-                        var lat = parseFloat(row[1]);
-                        var name = row[2];
-
-                        if (!isNaN(lng) && !isNaN(lat)) {
-                            var point = new BMap.Point(lng, lat);
-                            var marker = new BMap.Marker(point);
-                            
-                            // 创建信息窗口
-                            var label = new BMap.Label(name, {
-                                offset: new BMap.Size(20, -10)
-                            });
-                            label.setStyle({
-                                display: "none",
-                                border: "1px solid #ccc",
-                                padding: "5px",
-                                borderRadius: "3px",
-                                backgroundColor: "white"
-                            });
-                            
-                            marker.setLabel(label);
-                            
-                            // 添加鼠标事件
-                            marker.addEventListener("mouseover", function() {
-                                this.getLabel().setStyle({display: "block"});
-                            });
-                            marker.addEventListener("mouseout", function() {
-                                this.getLabel().setStyle({display: "none"});
-                            });
-
-                            map.addOverlay(marker);
-                            bounds.extend(point);
-                        }
-                    }
-                }
-
-                // 调整地图视野
-                if (!bounds.isEmpty()) {
-                    map.setViewport(bounds);
-                }
+        // 解析Excel
+        document.getElementById('upload').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const data = evt.target.result;
+                const workbook = XLSX.read(data, {type: 'binary'});
+                const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                const json = XLSX.utils.sheet_to_json(sheet, {header:1});
+                processExcel(json);
             };
-
-            reader.readAsArrayBuffer(file);
+            reader.readAsBinaryString(file);
         });
+
+        // 处理Excel数据
+        function processExcel(rows) {
+            if (rows.length < 2) {
+                resultDiv.innerHTML = "<span style='color:#f56c6c'>表格数据不足！</span>";
+                statDiv.innerHTML = '';
+                shopListDiv.innerHTML = '';
+                return;
+            }
+            // 第一行为表头
+            const header = rows[0];
+            shopData = [];
+            for (let i = 1; i < rows.length; i++) {
+                const row = rows[i];
+                if (!row || row.length < 5) continue; // 至少有店铺名、点餐、纬度、经度、一个日期
+                const name = row[0];
+                const hasOrder = row[1] == 1 ? true : false;
+                const lat = parseFloat(row[2]);
+                const lng = parseFloat(row[3]);
+                if (!name || isNaN(lat) || isNaN(lng)) continue;
+                // 日活数据
+                const daily = [];
+                for (let j = 4; j < header.length; j++) {
+                    let val = row[j];
+                    if (val === undefined || val === null || val === '') val = 0;
+                    val = Number(val);
+                    daily.push(isNaN(val) ? 0 : val);
+                }
+                const shop = {
+                    name,
+                    hasOrder,
+                    lat,
+                    lng,
+                    daily,
+                    dates: header.slice(4),
+                    totalUV: daily.reduce((a, b) => a + b, 0)
+                };
+                shopData.push(shop);
+            }
+            if (shopData.length === 0) {
+                resultDiv.innerHTML = "<span style='color:#f56c6c'>未解析到有效店铺数据！</span>";
+                statDiv.innerHTML = '';
+                shopListDiv.innerHTML = '';
+                return;
+            }
+            // 以第一个点为中心
+            initMap({lng: shopData[0].lng, lat: shopData[0].lat});
+            addMarkers();
+            renderShopList();
+            renderFilter();
+            resultDiv.innerHTML = `导入成功，共 <b style='color:#2d8cf0'>${shopData.length}</b> 家店铺。点击地图标记或左侧列表可查看日活趋势。`;
+            statDiv.innerHTML = `总UV：<b style='color:#fa541c;font-size:20px;'>${getTotalUV()}</b>`;
+            bindSearchInput();
+        }
+
+        // 计算总UV
+        function getTotalUV() {
+            return shopData.reduce((sum, shop) => sum + (shop.totalUV || 0), 0);
+        }
+
+        // 渲染筛选按钮，增加“仅置顶”
+        function renderFilter() {
+            let filterBar = document.getElementById('filterBar');
+            if (!filterBar) {
+                filterBar = document.createElement('div');
+                filterBar.id = 'filterBar';
+                statDiv.parentNode.insertBefore(filterBar, statDiv.nextSibling);
+            }
+            filterBar.innerHTML = `
+                <div style='margin-bottom:12px;'>
+                    <button type='button' class='filter-btn' id='filterAll' ${filterType==='all'?'style="background:#2d8cf0;color:#fff;"':''}>全部</button>
+                    <button type='button' class='filter-btn' id='filterOrder' ${filterType==='order'?'style="background:#52c41a;color:#fff;"':''}>有点餐</button>
+                    <button type='button' class='filter-btn' id='filterNoOrder' ${filterType==='noorder'?'style="background:#aaa;color:#fff;"':''}>无点餐</button>
+                    <button type='button' class='filter-btn' id='filterTop' ${filterType==='top'?'style="background:#faad14;color:#fff;"':''}>仅置顶</button>
+                </div>
+            `;
+            document.getElementById('filterAll').onclick = () => { filterType='all'; addMarkers(); renderShopList(); renderFilter(); };
+            document.getElementById('filterOrder').onclick = () => { filterType='order'; addMarkers(); renderShopList(); renderFilter(); };
+            document.getElementById('filterNoOrder').onclick = () => { filterType='noorder'; addMarkers(); renderShopList(); renderFilter(); };
+            document.getElementById('filterTop').onclick = () => { filterType='top'; addMarkers(); renderShopList(); renderFilter(); };
+        }
+
+        // 渲染店铺列表，支持置顶按钮和高亮
+        function renderShopList() {
+            shopListDiv.innerHTML = '';
+            let filtered = getFilteredShops();
+            if (filtered.length === 0) {
+                shopListDiv.innerHTML = '<div class="no-data">暂无店铺</div>';
+                return;
+            }
+            filtered.forEach((shop, idx) => {
+                const div = document.createElement('div');
+                let isTop = topShops.includes(shop.name);
+                div.className = 'shop-item' + (activeIdx === idx ? ' active' : '') + (isTop ? ' top' : '');
+                div.innerHTML = `<span class='shop-name'>${shop.name}</span><span class='shop-uv'>UV: <span class='uv-num'>${shop.totalUV}</span>${shop.hasOrder ? ' <span class="order-tag">(点餐)</span>' : ''}</span>
+                    <button class='top-btn' title='${isTop ? '取消置顶' : '置顶'}'>
+                        <svg viewBox="0 0 24 24" fill="${isTop ? '#fff' : 'none'}" stroke="#faad14" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="12,2 15,9 22,9.5 17,14.5 18.5,22 12,18 5.5,22 7,14.5 2,9.5 9,9"/>
+                        </svg>
+                    </button>`;
+                div.onclick = (e) => {
+                    // 阻止点击置顶按钮时触发选中
+                    if (e.target.classList.contains('top-btn')) return;
+                    activeIdx = idx;
+                    renderShopList();
+                    addMarkers();
+                    centerAndShow(idx);
+                };
+                // 置顶按钮事件
+                div.querySelector('.top-btn').onclick = (e) => {
+                    e.stopPropagation();
+                    if (isTop) {
+                        topShops = topShops.filter(n => n !== shop.name);
+                    } else {
+                        topShops.push(shop.name);
+                    }
+                    renderShopList();
+                    addMarkers();
+                };
+                shopListDiv.appendChild(div);
+            });
+        }
+
+        // 添加标记
+        function addMarkers() {
+            if (!map) return;
+            map.clearOverlays();
+            markers = [];
+            let filtered = getFilteredShops();
+            filtered.forEach((shop, idx) => {
+                const point = new BMap.Point(shop.lng, shop.lat);
+                let icon;
+                // 判断是否为选中
+                const isActive = (activeIdx === idx);
+                if (shop.hasOrder) {
+                    icon = new BMap.Icon(
+                        'data:image/svg+xml;base64,' +
+                        btoa(`<svg width="32" height="32" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="16" cy="16" r="12" fill="#52c41a" stroke="${isActive ? '#faad14' : '#fff'}" stroke-width="${isActive ? 6 : 4}"/>
+                        </svg>`),
+                        new BMap.Size(32, 32),
+                        { anchor: new BMap.Size(16, 32) }
+                    );
+                } else {
+                    icon = new BMap.Icon(
+                        'data:image/svg+xml;base64,' +
+                        btoa(`<svg width="32" height="32" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="16" cy="16" r="12" fill="#2d8cf0" stroke="${isActive ? '#faad14' : '#fff'}" stroke-width="${isActive ? 6 : 4}"/>
+                        </svg>`),
+                        new BMap.Size(32, 32),
+                        { anchor: new BMap.Size(16, 32) }
+                    );
+                }
+                const marker = new BMap.Marker(point, {icon});
+                // 悬浮显示店铺名
+                marker.setTitle(shop.name);
+                const label = new BMap.Label(shop.name, {
+                    offset: new BMap.Size(0, -36),
+                    position: point
+                });
+                label.setStyle({
+                    background: 'rgba(45,140,240,0.95)',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    padding: '2px 10px',
+                    boxShadow: '0 2px 8px rgba(45,140,240,0.13)',
+                    display: 'none',
+                    zIndex: 9999
+                });
+                map.addOverlay(marker);
+                map.addOverlay(label);
+                label.hide();
+                marker.addEventListener('mouseover', function() { label.show(); });
+                marker.addEventListener('mouseout', function() { label.hide(); });
+                markers.push(marker);
+                marker.addEventListener("click", function(e) {
+                    activeIdx = idx;
+                    // 不再 setAnimation
+                    renderShopList();
+                    addMarkers(); // 重新渲染所有标记，刷新高亮
+                    showInfoCard(shop);
+                });
+            });
+        }
+
+        // highlightMarker 函数可以直接去掉或留空
+        function highlightMarker(idx) {}
+
+        // 居中并弹出卡片
+        function centerAndShow(idx) {
+            if (!shopData[idx]) return;
+            const shop = shopData[idx];
+            map.centerAndZoom(new BMap.Point(shop.lng, shop.lat), 15);
+            showInfoCard(shop);
+        }
+
+        // 显示卡片（模态居中）
+        function showInfoCard(shop) {
+            infoCardModal.style.display = 'flex';
+            infoCardHeader.textContent = shop.name;
+            const chartDom = document.getElementById('echart');
+            chartDom.innerHTML = '';
+            // 销毁之前的实例，防止多次渲染冲突
+            if (myChart) {
+                myChart.dispose();
+                myChart = null;
+            }
+            // 延迟初始化，确保弹窗已显示且有尺寸
+            setTimeout(() => {
+                myChart = echarts.init(chartDom);
+                const option = {
+                    title: { text: '', left: 'center' },
+                    tooltip: { trigger: 'axis' },
+                    grid: { left: 40, right: 20, top: 30, bottom: 30 },
+                    xAxis: { type: 'category', data: shop.dates, axisLabel: { rotate: 30 } },
+                    yAxis: { type: 'value', name: '日活', minInterval: 1 },
+                    series: [{
+                        name: '日活',
+                        type: 'line',
+                        data: shop.daily,
+                        smooth: true,
+                        symbol: 'circle',
+                        symbolSize: 7,
+                        lineStyle: { color: '#2d8cf0', width: 3 },
+                        itemStyle: { color: '#2d8cf0' },
+                        areaStyle: { color: 'rgba(45,140,240,0.08)' }
+                    }]
+                };
+                myChart.setOption(option);
+            }, 50);
+        }
+
+        // 关闭卡片
+        closeCardBtn.onclick = function() {
+            infoCardModal.style.display = 'none';
+        };
+        // 点击模态背景关闭
+        infoCardModal.onclick = function(e) {
+            if (e.target === infoCardModal) infoCardModal.style.display = 'none';
+        };
+        // 阻止卡片内部冒泡
+        infoCard.onclick = function(e) { e.stopPropagation(); };
+
+        // 获取筛选后的店铺，支持置顶
+        function getFilteredShops() {
+            let arr = shopData;
+            if (filterType === 'order') arr = arr.filter(s => s.hasOrder);
+            if (filterType === 'noorder') arr = arr.filter(s => !s.hasOrder);
+            if (filterType === 'top') arr = arr.filter(s => topShops.includes(s.name));
+            if (searchKeyword && searchKeyword.trim() !== '') {
+                arr = arr.filter(s => s.name && s.name.indexOf(searchKeyword.trim()) !== -1);
+            }
+            return arr;
+        }
+
+        // 搜索输入事件
+        function bindSearchInput() {
+            const input = document.getElementById('searchInput');
+            input.oninput = function() {
+                searchKeyword = this.value;
+                addMarkers();
+                renderShopList();
+            };
+        }
+
+        // 初始化地图（南京）
+        initMap();
     </script>
 </body>
-</html> 
+</html>
